@@ -1,7 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 
-# Function to calculate total, bill amounts, and return amount
+# Function to toggle "Always on Top"
+def toggle_always_on_top():
+    root.attributes("-topmost", always_on_top_var.get())
+
+# Function to calculate totals, bill amounts, and return amount
 def calculate(*args):
     try:
         # Calculate cash total
@@ -25,10 +29,16 @@ def calculate(*args):
         total_bills = bill1 + bill2 + bill3
         return_amount = total - total_bills
 
+        # Update Return Amount and Color
         return_var.set(f"₹ {return_amount:.2f}")
+        if return_amount < 0:
+            return_label.config(fg="red")  # Negative value: Red
+        else:
+            return_label.config(fg="green")  # Positive value: Green
     except ValueError:
         total_var.set("Error")
         return_var.set("Error")
+        return_label.config(fg="black")  # Reset to default color on error
 
 # Function to clear all fields
 def clear_all(*args):
@@ -42,6 +52,7 @@ def clear_all(*args):
     online_payment_var.set("")
     total_var.set("₹ 0.00")
     return_var.set("₹ 0.00")
+    return_label.config(fg="black")  # Reset to default color
 
 # Function to move focus to the next widget
 def focus_next_widget(event):
@@ -69,6 +80,7 @@ def focus_vertical(event):
 # GUI Setup
 root = tk.Tk()
 root.title("Cash Calculator")
+root.geometry("400x600")  # Adjust initial window size
 
 # Data
 notes = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1]
@@ -97,21 +109,21 @@ for i, note in enumerate(notes):
     amount_label.grid(row=i+1, column=2, padx=5, pady=5)
     amount_vars[i].set("₹ 0.00")
 
-# Total Cash + Online Payment
-total_var = tk.StringVar(value="₹ 0.00")
-ttk.Label(root, text="Total (Cash + Online)", font=("Arial", 12, "bold")).grid(row=len(notes)+1, column=0, padx=5, pady=5)
-ttk.Label(root, textvariable=total_var, font=("Arial", 12), width=15).grid(row=len(notes)+1, column=2, padx=5, pady=5)
-
-# Online Payment
+# Online Payment (Above Total Cash)
 online_payment_var = tk.StringVar()
-ttk.Label(root, text="Online Payment", font=("Arial", 12, "bold")).grid(row=len(notes)+2, column=0, padx=5, pady=5)
+ttk.Label(root, text="Online Payment", font=("Arial", 12, "bold")).grid(row=len(notes)+1, column=0, padx=5, pady=5)
 online_payment_entry = ttk.Entry(root, textvariable=online_payment_var, font=("Arial", 12), width=10)
-online_payment_entry.grid(row=len(notes)+2, column=1, padx=5, pady=5)
+online_payment_entry.grid(row=len(notes)+1, column=1, padx=5, pady=5)
 online_payment_entry.bind("<KeyRelease>", calculate)
 online_payment_entry.bind("<Return>", focus_next_widget)
 online_payment_entry.bind("<Shift-Tab>", focus_previous_widget)
 online_payment_entry.bind("<Up>", focus_vertical)
 online_payment_entry.bind("<Down>", focus_vertical)
+
+# Total Cash + Online Payment
+total_var = tk.StringVar(value="₹ 0.00")
+ttk.Label(root, text="Total (Cash + Online)", font=("Arial", 12, "bold")).grid(row=len(notes)+2, column=0, padx=5, pady=5)
+ttk.Label(root, textvariable=total_var, font=("Arial", 12), width=15).grid(row=len(notes)+2, column=2, padx=5, pady=5)
 
 # Bill 1
 bill1_var = tk.StringVar()
@@ -148,18 +160,23 @@ bill3_entry.bind("<Down>", focus_vertical)
 
 # Return Amount
 return_var = tk.StringVar(value="₹ 0.00")
-ttk.Label(root, text="Return", font=("Arial", 12, "bold")).grid(row=len(notes)+6, column=0, padx=5, pady=5)
-ttk.Label(root, textvariable=return_var, font=("Arial", 12), width=10).grid(row=len(notes)+6, column=2, padx=5, pady=5)
+return_label = tk.Label(root, textvariable=return_var, font=("Arial", 12), width=10)
+return_label.grid(row=len(notes)+6, column=2, padx=5, pady=5)
+
+# "Always on Top" Toggle
+always_on_top_var = tk.IntVar(value=0)
+always_on_top_check = ttk.Checkbutton(root, text="Always on Top", variable=always_on_top_var, command=toggle_always_on_top)
+always_on_top_check.grid(row=len(notes)+7, column=0, pady=10)
 
 # Buttons
 calc_button = ttk.Button(root, text="Calculate", command=calculate)
-calc_button.grid(row=len(notes)+7, column=0, pady=10)
+calc_button.grid(row=len(notes)+8, column=0, pady=10)
 
 clear_button = ttk.Button(root, text="Clear", command=clear_all)
-clear_button.grid(row=len(notes)+7, column=1, pady=10)
+clear_button.grid(row=len(notes)+8, column=1, pady=10)
 
-# Keyboard Shortcut for Clear
+# Bind Ctrl+L to clear all
 root.bind("<Control-l>", clear_all)
 
-# Run the GUI
+# Mainloop
 root.mainloop()
