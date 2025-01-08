@@ -177,6 +177,7 @@ clear_button.grid(row=len(notes)+8, column=1, pady=10)
 
 # Bind Ctrl+L to clear all
 root.bind("<Control-l>", clear_all)
+root.bind("<Control-L>", clear_all)
 
 # Mainloop
 root.mainloop()
