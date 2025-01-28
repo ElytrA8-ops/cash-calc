@@ -10,6 +10,7 @@ def calculate(*args):
         for i, amt in enumerate(amounts):
             amount_vars[i].set(f"₹ {amt:.2f}")
         total_cash = sum(amounts)
+        total_cash_var.set(f"₹ {total_cash:.2f}")
 
         # Get online payment value
         online_payment = float(online_payment_var.get()) if online_payment_var.get() else 0
@@ -23,10 +24,10 @@ def calculate(*args):
 
         # Calculate total payments and return amount
         total_bills = bill1 + bill2 + bill3
-        return_amount = total - total_bills
+        return_amount = int(total - total_bills)  # Ensure return_amount is an integer
 
         # Update Return Amount and Color
-        return_var.set(f"₹ {return_amount:.2f}")
+        return_var.set(f"₹ {return_amount}")
         if return_amount < 0:
             return_label.config(fg="red")  # Negative value: Red
         else:
@@ -215,16 +216,21 @@ online_payment_entry.bind("<Shift-Tab>", focus_previous_widget)
 online_payment_entry.bind("<Up>", focus_vertical)
 online_payment_entry.bind("<Down>", focus_vertical)
 
+# Total Cash
+ttk.Label(root, text="Total Cash:", font=("Arial", 12, "bold")).grid(row=len(notes)+2, column=0, padx=5, pady=5)
+total_cash_var = tk.StringVar(value="₹ 0.00")
+ttk.Label(root, textvariable=total_cash_var, font=("Arial", 12, "bold"), width=15).grid(row=len(notes)+2, column=2, padx=5, pady=5)
+
 # Total Cash + Online Payment
 total_var = tk.StringVar(value="₹ 0.00")
-ttk.Label(root, text="Total (Cash + Online)", font=("Arial", 12, "bold")).grid(row=len(notes)+2, column=0, padx=5, pady=5)
-ttk.Label(root, textvariable=total_var, font=("Arial", 12), width=15).grid(row=len(notes)+2, column=2, padx=5, pady=5)
+ttk.Label(root, text="Total (Cash + Online)", font=("Arial", 12, "bold")).grid(row=len(notes)+3, column=0, padx=5, pady=5)
+ttk.Label(root, textvariable=total_var, font=("Arial", 12, "bold"), width=15).grid(row=len(notes)+3, column=2, padx=5, pady=5)
 
 # Bill 1
 bill1_var = tk.StringVar()
-ttk.Label(root, text="Bill 1", font=("Arial", 12, "bold")).grid(row=len(notes)+3, column=0, padx=5, pady=5)
+ttk.Label(root, text="Bill 1", font=("Arial", 12, "bold")).grid(row=len(notes)+4, column=0, padx=5, pady=5)
 bill1_entry = ttk.Entry(root, textvariable=bill1_var, font=("Arial", 12), width=10)
-bill1_entry.grid(row=len(notes)+3, column=1, padx=5, pady=5)
+bill1_entry.grid(row=len(notes)+4, column=1, padx=5, pady=5)
 bill1_entry.bind("<KeyRelease>", calculate)
 bill1_entry.bind("<Return>", focus_next_widget)
 bill1_entry.bind("<Shift-Tab>", focus_previous_widget)
@@ -233,9 +239,9 @@ bill1_entry.bind("<Down>", focus_vertical)
 
 # Bill 2
 bill2_var = tk.StringVar()
-ttk.Label(root, text="Bill 2", font=("Arial", 12, "bold")).grid(row=len(notes)+4, column=0, padx=5, pady=5)
+ttk.Label(root, text="Bill 2", font=("Arial", 12, "bold")).grid(row=len(notes)+5, column=0, padx=5, pady=5)
 bill2_entry = ttk.Entry(root, textvariable=bill2_var, font=("Arial", 12), width=10)
-bill2_entry.grid(row=len(notes)+4, column=1, padx=5, pady=5)
+bill2_entry.grid(row=len(notes)+5, column=1, padx=5, pady=5)
 bill2_entry.bind("<KeyRelease>", calculate)
 bill2_entry.bind("<Return>", focus_next_widget)
 bill2_entry.bind("<Shift-Tab>", focus_previous_widget)
@@ -244,9 +250,9 @@ bill2_entry.bind("<Down>", focus_vertical)
 
 # Bill 3
 bill3_var = tk.StringVar()
-ttk.Label(root, text="Bill 3", font=("Arial", 12, "bold")).grid(row=len(notes)+5, column=0, padx=5, pady=5)
+ttk.Label(root, text="Bill 3", font=("Arial", 12, "bold")).grid(row=len(notes)+6, column=0, padx=5, pady=5)
 bill3_entry = ttk.Entry(root, textvariable=bill3_var, font=("Arial", 12), width=10)
-bill3_entry.grid(row=len(notes)+5, column=1, padx=5, pady=5)
+bill3_entry.grid(row=len(notes)+6, column=1, padx=5, pady=5)
 bill3_entry.bind("<KeyRelease>", calculate)
 bill3_entry.bind("<Return>", focus_next_widget)
 bill3_entry.bind("<Shift-Tab>", focus_previous_widget)
@@ -254,9 +260,10 @@ bill3_entry.bind("<Up>", focus_vertical)
 bill3_entry.bind("<Down>", focus_vertical)
 
 # Return Amount
-return_var = tk.StringVar(value="₹ 0.00")
-return_label = tk.Label(root, textvariable=return_var, font=("Arial", 12), width=10)
-return_label.grid(row=len(notes)+6, column=2, padx=5, pady=5)
+ttk.Label(root, text="Return:", font=("Arial", 15, "bold")).grid(row=len(notes)+7, column=0,columnspan=2, padx=5, pady=5)
+return_var = tk.StringVar(value="₹ 0")
+return_label = tk.Label(root, textvariable=return_var, font=("Arial", 15, "bold"), width=15)
+return_label.grid(row=len(notes)+7, column=1, columnspan=3, padx=5, pady=5)
 
 # Bind Ctrl+L to clear all
 root.bind("<Control-l>", clear_all)
