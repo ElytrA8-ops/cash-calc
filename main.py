@@ -7,6 +7,28 @@ from escpos.printer import Network
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 import os
+import json
+from datetime import datetime
+import sqlite3
+
+# Initialize DB and create table if not exists
+conn = sqlite3.connect("receipts.db")
+cur = conn.cursor()
+cur.execute("""
+CREATE TABLE IF NOT EXISTS receipts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    datetime TEXT,
+    bill1 TEXT,
+    bill2 TEXT,
+    bill3 TEXT,
+    cash_breakdown TEXT,
+    online_payment TEXT,
+    total_cash TEXT,
+    total TEXT,
+    return_amt TEXT
+)
+""")
+conn.commit()
 
 def get_printer_ip():
     rc_path = os.path.join(os.path.dirname(__file__), "printer.rc")
@@ -451,6 +473,7 @@ return_label.grid(row=len(notes)+7, column=1, columnspan=5, padx=5, pady=5)
 
 # Function to save the cash receipt as PDF (optimized for 3-inch printer)
 def save_receipt_pdf():
+    save_receipt_to_db()
     receipt_lines = []
     receipt_lines.append("====== CASH RECEIPT ======")
     receipt_lines.append("")
@@ -505,6 +528,7 @@ def save_receipt_pdf():
 
 # Function to print the cash receipt to Epson POS printer
 def print_pos_receipt():
+    save_receipt_to_db()
     receipt_lines = []
     receipt_lines.append("====== CASH RECEIPT ======")
     receipt_lines.append("")
@@ -574,6 +598,36 @@ def print_pos_receipt():
     except Exception as e:
         messagebox.showerror("Print Error", f"Could not print to EPSON printer:\n{e}")
 
+# Function to save receipt to database
+def save_receipt_to_db():
+    cash_breakdown = []
+    for i, note in enumerate(notes):
+        qty = (
+            safe_eval(bundle1_vars[i].get())
+            + safe_eval(bundle2_vars[i].get())
+            + safe_eval(bundle3_vars[i].get())
+            + safe_eval(bundle4_vars[i].get())
+            + safe_eval(bundle5_vars[i].get())
+            + safe_eval(bundle6_vars[i].get())
+        )
+        if qty > 0:
+            cash_breakdown.append({"note": note, "qty": qty})
+    cur.execute("""
+        INSERT INTO receipts (datetime, bill1, bill2, bill3, cash_breakdown, online_payment, total_cash, total, return_amt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        bill1_var.get(),
+        bill2_var.get(),
+        bill3_var.get(),
+        json.dumps(cash_breakdown),
+        online_payment_var.get(),
+        total_cash_var.get(),
+        total_var.get(),
+        return_var.get()
+    ))
+    conn.commit()
+
 # Add the Print Cash Receipt button (place after your Return label)
 print_button = ttk.Button(
     root,
@@ -591,6 +645,34 @@ save_pdf_button = ttk.Button(
     style="TButton"
 )
 save_pdf_button.grid(row=len(notes)+8, column=4, columnspan=4, pady=10)
+
+# Function to open Receipt Log
+def open_receipt_log():
+    log_win = tk.Toplevel(root)
+    log_win.title("Receipt Log")
+    search_var = tk.StringVar()
+
+    def search():
+        for row in tree.get_children():
+            tree.delete(row)
+        q = search_var.get()
+        cur.execute("SELECT id, datetime, bill1, bill2, bill3, total, return_amt FROM receipts WHERE bill1 LIKE ? OR bill2 LIKE ? OR bill3 LIKE ? OR total LIKE ? OR return_amt LIKE ? OR datetime LIKE ?", 
+                    (f"%{q}%",)*6)
+        for row in cur.fetchall():
+            tree.insert("", "end", values=row)
+
+    tk.Label(log_win, text="Search:").pack()
+    tk.Entry(log_win, textvariable=search_var).pack()
+    tk.Button(log_win, text="Search", command=search).pack()
+
+    cols = ("ID", "Date/Time", "Bill 1", "Bill 2", "Bill 3", "Total", "Return")
+    tree = ttk.Treeview(log_win, columns=cols, show="headings")
+    for col in cols:
+        tree.heading(col, text=col)
+    tree.pack(fill="both", expand=True)
+    search()
+
+menubar.add_command(label="Receipt Log", command=open_receipt_log)
 
 # Bind Ctrl+L to clear all
 root.bind("<Control-l>", clear_all)
