@@ -475,7 +475,8 @@ def save_receipt_pdf():
     receipt_lines.append(f"Online Payment: {online_payment_var.get()}")
     receipt_lines.append(f"Total Cash: {total_cash_var.get().replace('₹', 'Rs.')}")
     receipt_lines.append(f"Total (Cash + Online): {total_var.get().replace('₹', 'Rs.')}")
-    receipt_lines.append(f"Return: {return_var.get().replace('₹', 'Rs.')}")
+    return_amt = return_var.get().replace('₹', '').replace('Give:', 'Return:').replace('Take:', 'Take:').strip()
+    receipt_lines.append(f"{return_amt}")
     receipt_lines.append("=========================")
 
     # --- Save as PDF optimized for 3-inch printer (72mm) ---
@@ -528,7 +529,8 @@ def print_pos_receipt():
     receipt_lines.append(f"Online Payment: {online_payment_var.get()}")
     receipt_lines.append(f"Total Cash: {total_cash_var.get().replace('₹', 'Rs.')}")
     receipt_lines.append(f"Total (Cash + Online): {total_var.get().replace('₹', 'Rs.')}")
-    receipt_lines.append(f"Return: {return_var.get().replace('₹', 'Rs.')}")
+    return_amt = return_var.get().replace('₹', '').replace('Give:', 'Return:').replace('Take:', 'Take:').strip()
+    receipt_lines.append(f"Return: {return_amt}")
     receipt_lines.append("=========================")
 
     receipt_text = "\n".join(receipt_lines)
@@ -561,12 +563,14 @@ def print_pos_receipt():
             p.text(f"Online Payment: {online_payment_var.get()}\n")
             p.text(f"Total Cash: {total_cash_var.get().replace('₹', 'Rs.')}\n")
             p.text(f"Total (Cash + Online): {total_var.get().replace('₹', 'Rs.')}\n")
-            p.text(f"Return: {return_var.get().replace('₹', 'Rs.')}\n")
+            # Only show the number for Return, negative means take, positive means give, no label
+            return_amt = return_var.get().replace('₹', '').replace('Give:', '').replace('Take:', '').strip()
+            p.text(f"Return: {return_amt}\n")
             p.text("=========================\n")
             p.cut()
             messagebox.showinfo("Print", "Receipt sent to printer.")
         else:
-            messagebox.showerror("Print Error", "Printer IP is not set. Please set PRINTER_IP at the top of the script.")
+            messagebox.showerror("Print Error", "Printer IP is not set. Please set PRINTER_IP In printer.rc.")
     except Exception as e:
         messagebox.showerror("Print Error", f"Could not print to EPSON printer:\n{e}")
 
