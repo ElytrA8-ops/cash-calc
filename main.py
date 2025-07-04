@@ -449,9 +449,8 @@ return_var = tk.StringVar(value="₹ 0")
 return_label = tk.Label(root, textvariable=return_var, font=("FiraCode Nerd Font", 15, "bold"), width=15)
 return_label.grid(row=len(notes)+7, column=1, columnspan=5, padx=5, pady=5)
 
-# Function to print/save the cash receipt
-def print_pos_receipt():
-    # Gather data for the receipt
+# Function to save the cash receipt as PDF (optimized for 3-inch printer)
+def save_receipt_pdf():
     receipt_lines = []
     receipt_lines.append("====== CASH RECEIPT ======")
     receipt_lines.append("")
@@ -470,17 +469,16 @@ def print_pos_receipt():
             + safe_eval(bundle6_vars[i].get())
         )
         if qty > 0:
-            receipt_lines.append(f"₹{note}: {qty}")
+            total = note * qty
+            receipt_lines.append(f"Rs.{note} x {qty} = Rs.{total}")
     receipt_lines.append("")
     receipt_lines.append(f"Online Payment: {online_payment_var.get()}")
-    receipt_lines.append(f"Total Cash: {total_cash_var.get()}")
-    receipt_lines.append(f"Total (Cash + Online): {total_var.get()}")
-    receipt_lines.append(f"Return: {return_var.get()}")
+    receipt_lines.append(f"Total Cash: {total_cash_var.get().replace('₹', 'Rs.')}")
+    receipt_lines.append(f"Total (Cash + Online): {total_var.get().replace('₹', 'Rs.')}")
+    receipt_lines.append(f"Return: {return_var.get().replace('₹', 'Rs.')}")
     receipt_lines.append("=========================")
 
     # --- Save as PDF optimized for 3-inch printer (72mm) ---
-    # 3-inch paper is about 72mm wide; at 72 points/inch, that's ~204 points
-    # We'll use a custom page size: width=204pt, height enough for content
     pdf_width = 204  # 72mm in points
     line_height = 16
     margin = 8
@@ -504,6 +502,37 @@ def print_pos_receipt():
         except Exception as e:
             messagebox.showerror("Error", f"Could not save receipt:\n{e}")
 
+# Function to print the cash receipt to Epson POS printer
+def print_pos_receipt():
+    receipt_lines = []
+    receipt_lines.append("====== CASH RECEIPT ======")
+    receipt_lines.append("")
+    receipt_lines.append(f"Bill 1: {bill1_var.get()}")
+    receipt_lines.append(f"Bill 2: {bill2_var.get()}")
+    receipt_lines.append(f"Bill 3: {bill3_var.get()}")
+    receipt_lines.append("")
+    receipt_lines.append("Cash Breakdown:")
+    for i, note in enumerate(notes):
+        qty = (
+            safe_eval(bundle1_vars[i].get())
+            + safe_eval(bundle2_vars[i].get())
+            + safe_eval(bundle3_vars[i].get())
+            + safe_eval(bundle4_vars[i].get())
+            + safe_eval(bundle5_vars[i].get())
+            + safe_eval(bundle6_vars[i].get())
+        )
+        if qty > 0:
+            total = note * qty
+            receipt_lines.append(f"Rs.{note} x {qty} = Rs.{total}")
+    receipt_lines.append("")
+    receipt_lines.append(f"Online Payment: {online_payment_var.get()}")
+    receipt_lines.append(f"Total Cash: {total_cash_var.get().replace('₹', 'Rs.')}")
+    receipt_lines.append(f"Total (Cash + Online): {total_var.get().replace('₹', 'Rs.')}")
+    receipt_lines.append(f"Return: {return_var.get().replace('₹', 'Rs.')}")
+    receipt_lines.append("=========================")
+
+    receipt_text = "\n".join(receipt_lines)
+
     # --- Print to Epson POS printer using python-escpos ---
     try:
         if PRINTER_IP:
@@ -526,12 +555,13 @@ def print_pos_receipt():
                     + safe_eval(bundle6_vars[i].get())
                 )
                 if qty > 0:
-                    p.text(f"₹{note}: {qty}\n")
+                    total = note * qty
+                    p.text(f"Rs.{note} x {qty} = Rs.{total}\n")
             p.text("\n")
             p.text(f"Online Payment: {online_payment_var.get()}\n")
-            p.text(f"Total Cash: {total_cash_var.get()}\n")
-            p.text(f"Total (Cash + Online): {total_var.get()}\n")
-            p.text(f"Return: {return_var.get()}\n")
+            p.text(f"Total Cash: {total_cash_var.get().replace('₹', 'Rs.')}\n")
+            p.text(f"Total (Cash + Online): {total_var.get().replace('₹', 'Rs.')}\n")
+            p.text(f"Return: {return_var.get().replace('₹', 'Rs.')}\n")
             p.text("=========================\n")
             p.cut()
             messagebox.showinfo("Print", "Receipt sent to printer.")
@@ -543,11 +573,20 @@ def print_pos_receipt():
 # Add the Print Cash Receipt button (place after your Return label)
 print_button = ttk.Button(
     root,
-    text="Print Cash Receipt",  # Changed button text here
+    text="Print Cash Receipt",
     command=print_pos_receipt,
     style="TButton"
 )
-print_button.grid(row=len(notes)+8, column=0, columnspan=8, pady=10)
+print_button.grid(row=len(notes)+8, column=0, columnspan=4, pady=10)
+
+# Add the Save PDF Receipt button (place after your Return label)
+save_pdf_button = ttk.Button(
+    root,
+    text="Save PDF Receipt",
+    command=save_receipt_pdf,
+    style="TButton"
+)
+save_pdf_button.grid(row=len(notes)+8, column=4, columnspan=4, pady=10)
 
 # Bind Ctrl+L to clear all
 root.bind("<Control-l>", clear_all)
