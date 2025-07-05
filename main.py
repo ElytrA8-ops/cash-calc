@@ -235,7 +235,7 @@ def open_credit_card_charges_calculator():
             charges = safe_eval(charges_entry.get())
 
             total = bill1 + bill2 + bill3
-            total_with_charges = total + (total * charges / 100)
+            total_with_charges = round(total + (total * charges / 100))
 
             total_var.set(f"Total: ₹ {total:.2f}")
             total_with_charges_var.set(f"Total with Charges: ₹ {total_with_charges:.2f}")
